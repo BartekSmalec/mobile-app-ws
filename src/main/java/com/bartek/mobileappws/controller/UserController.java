@@ -1,8 +1,10 @@
 package com.bartek.mobileappws.controller;
 
+import com.bartek.mobileappws.Exceptions.UserServiceException;
 import com.bartek.mobileappws.model.UpdateUser;
 import com.bartek.mobileappws.model.User;
 import com.bartek.mobileappws.model.UserResponse;
+import com.bartek.mobileappws.services.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +19,14 @@ import java.util.UUID;
 @RequestMapping("/users")
 public class UserController {
 
+    private final UserService userService;
+
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
+
     Map<String, User> userMap;
+
 
     @GetMapping
     public String getUser(@RequestParam(value = "page", defaultValue = "1") int page, @RequestParam(value = "limit", defaultValue = "50") int limit
@@ -31,6 +40,11 @@ public class UserController {
 
         String firstName = null;
 
+
+        if (true) {
+            throw new UserServiceException("UserServiceException");
+        }
+
         int firstNameLength = firstName.length();
 
         if (userMap.containsKey(userId)) return new ResponseEntity<>(userMap.get(userId), HttpStatus.OK);
@@ -41,21 +55,15 @@ public class UserController {
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE},
             produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
     public ResponseEntity<User> createUser(@Valid @RequestBody UserResponse userResponse) {
-        String userId = UUID.randomUUID().toString();
 
-
-        User user = new User();
-        user.setFirstName(userResponse.getFirstName());
-        user.setLastName(userResponse.getLastName());
-        user.setEmail(userResponse.getEmail());
-        user.setUserId(userId);
+        User user = userService.createUser(userResponse);
 
 
         if (userMap == null) {
             userMap = new HashMap<>();
         }
 
-        userMap.put(userId, user);
+        userMap.put(user.getUserId(), user);
 
         return new ResponseEntity<>(user, HttpStatus.CREATED);
     }
